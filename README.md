@@ -52,6 +52,9 @@ web pages should register their routes on the same server object as the core;
 the core must not start a second server on another port. See
 [examples/LegacyIntegration/README.md](examples/LegacyIntegration/README.md).
 
+The generic design and validation boundaries are documented in
+[ARCHITECTURE-REVIEW.md](ARCHITECTURE-REVIEW.md).
+
 ## Repeater scope
 
 Version 1 is not a NAT repeater. The setup access point is for local recovery
