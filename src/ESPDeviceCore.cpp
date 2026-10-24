@@ -43,7 +43,7 @@ String ESPDeviceCore::statusText() const {
 }
 
 bool ESPDeviceCore::restart() {
-  status_ = "Riavvio richiesto";
+  status_ = "Restart requested";
   delay(50);
 #if defined(ESP8266)
   ESP.restart();
@@ -96,7 +96,7 @@ void ESPDeviceCore::startSetupAp() {
   suffix.replace(":", "");
   suffix = suffix.substring(max(0, static_cast<int>(suffix.length()) - 4));
   WiFi.softAP(String("ESP-Setup-") + suffix, config_.apPassword);
-  status_ = "Modalita configurazione: http://192.168.4.1/";
+  status_ = "Setup mode: http://192.168.4.1/";
 }
 
 bool ESPDeviceCore::authorized() {
@@ -153,10 +153,10 @@ void ESPDeviceCore::registerRoutes() {
   });
   server_.on("/admin/api/restart", HTTP_POST, [this] {
     if (authorized() && validCsrf()) {
-      server_.send(200, "application/json", "{\"message\":\"Riavvio in corso\"}");
+      server_.send(200, "application/json", "{\"message\":\"Restarting\"}");
       restart();
     } else if (server_.hasArg("csrf_token")) {
-      server_.send(403, "application/json", "{\"message\":\"Token CSRF non valido\"}");
+      server_.send(403, "application/json", "{\"message\":\"Invalid CSRF token\"}");
     }
   });
   server_.on("/admin/api/config", HTTP_POST, [this] { handleConfig(); });
@@ -174,28 +174,28 @@ void ESPDeviceCore::sendAdminPage() {
   if (!authorized()) return;
   String page = "<!doctype html><meta charset=utf-8><title>ESP Device Core</title>"
     "<style>body{font-family:sans-serif;max-width:720px;margin:2rem auto}label{display:block;margin-top:.7rem}input{width:100%;padding:.4rem}button{margin-top:1rem;padding:.5rem}</style>"
-    "<h1>ESP Device Core</h1><p><a href='/admin/api/status'>Stato JSON</a></p>"
+    "<h1>ESP Device Core</h1><p><a href='/admin/api/status'>JSON status</a></p>"
     "<form method=post action='/admin/api/config'><input type=hidden name=csrf_token value='" + csrfToken_ + "'>"
-    "<label>Wi-Fi primario<input name=primary_ssid maxlength=63 value='" + String(config_.primarySsid) + "'></label>"
-    "<label>Password primaria<input name=primary_password type=password maxlength=63></label>"
-    "<label>Wi-Fi secondario<input name=secondary_ssid maxlength=63 value='" + String(config_.secondarySsid) + "'></label>"
-    "<label>Password secondaria<input name=secondary_password type=password maxlength=63></label>"
+    "<label>Primary Wi-Fi<input name=primary_ssid maxlength=63 value='" + String(config_.primarySsid) + "'></label>"
+    "<label>Primary password<input name=primary_password type=password maxlength=63></label>"
+    "<label>Secondary Wi-Fi<input name=secondary_ssid maxlength=63 value='" + String(config_.secondarySsid) + "'></label>"
+    "<label>Secondary password<input name=secondary_password type=password maxlength=63></label>"
     "<label><input type=checkbox name=dhcp " + String(config_.useDhcp ? "checked" : "") + "> DHCP</label>"
-    "<label>IP statico (opzionale)<input name=static_ip placeholder='192.168.1.110'></label>"
-    "<label>Gateway<input name=gateway placeholder='192.168.1.254'></label>"
+    "<label>Static IP (optional)<input name=static_ip placeholder='192.168.1.100'></label>"
+    "<label>Gateway<input name=gateway placeholder='192.168.1.1'></label>"
     "<label>Subnet<input name=subnet value='255.255.255.0'></label>"
-    "<label>DNS<input name=dns placeholder='192.168.1.254'></label>"
-    "<button>Salva Wi-Fi e riavvia</button></form>"
-    "<form method=post action='/admin/api/restart'><input type=hidden name=csrf_token value='" + csrfToken_ + "'><button>Riavvia</button></form>"
+    "<label>DNS<input name=dns placeholder='192.168.1.1'></label>"
+    "<button>Save Wi-Fi and restart</button></form>"
+    "<form method=post action='/admin/api/restart'><input type=hidden name=csrf_token value='" + csrfToken_ + "'><button>Restart</button></form>"
     "<form method=post action='/admin/api/update' enctype='multipart/form-data'>"
-    "<input type=hidden name=csrf_token value='" + csrfToken_ + "'><input type=file name=firmware accept='.bin' required><button>Carica firmware</button></form>";
+    "<input type=hidden name=csrf_token value='" + csrfToken_ + "'><input type=file name=firmware accept='.bin' required><button>Upload firmware</button></form>";
   server_.send(200, "text/html; charset=utf-8", page);
 }
 
 void ESPDeviceCore::handleConfig() {
   if (!authorized()) return;
   if (!validCsrf()) {
-    server_.send(403, "application/json", "{\"message\":\"Token CSRF non valido\"}");
+    server_.send(403, "application/json", "{\"message\":\"Invalid CSRF token\"}");
     return;
   }
   String primarySsid = server_.arg("primary_ssid");
@@ -206,7 +206,7 @@ void ESPDeviceCore::handleConfig() {
   if (secondaryPassword.isEmpty()) secondaryPassword = config_.secondaryPassword;
   if (primarySsid.length() > 63 || primaryPassword.length() > 63 ||
       secondarySsid.length() > 63 || secondaryPassword.length() > 63) {
-    server_.send(400, "application/json", "{\"message\":\"Credenziali troppo lunghe\"}");
+    server_.send(400, "application/json", "{\"message\":\"Credentials are too long\"}");
     return;
   }
   char* primarySsidValue = strdup(primarySsid.c_str());
@@ -218,7 +218,7 @@ void ESPDeviceCore::handleConfig() {
     free(primaryPasswordValue);
     free(secondarySsidValue);
     free(secondaryPasswordValue);
-    server_.send(500, "application/json", "{\"message\":\"Memoria insufficiente\"}");
+    server_.send(500, "application/json", "{\"message\":\"Insufficient memory\"}");
     return;
   }
   config_.primarySsid = primarySsidValue;
@@ -235,15 +235,15 @@ void ESPDeviceCore::handleConfig() {
         !parseIpAddress(gateway, config_.gateway) ||
         !parseIpAddress(subnet, config_.subnet) ||
         !parseIpAddress(dns, config_.dns)) {
-      server_.send(400, "application/json", "{\"message\":\"Indirizzo IP non valido\"}");
+      server_.send(400, "application/json", "{\"message\":\"Invalid IP address\"}");
       return;
     }
   }
   if (!saveStoredConfig()) {
-    server_.send(500, "application/json", "{\"message\":\"Salvataggio configurazione fallito\"}");
+    server_.send(500, "application/json", "{\"message\":\"Configuration save failed\"}");
     return;
   }
-  server_.send(200, "application/json", "{\"message\":\"Configurazione salvata, riavvio in corso\"}");
+  server_.send(200, "application/json", "{\"message\":\"Configuration saved, restarting\"}");
   delay(300);
   restart();
 }
@@ -251,15 +251,15 @@ void ESPDeviceCore::handleConfig() {
 void ESPDeviceCore::handleUpdate() {
   if (!authorized()) return;
   if (!validCsrf()) {
-    server_.send(403, "application/json", "{\"message\":\"Token CSRF non valido\"}");
+    server_.send(403, "application/json", "{\"message\":\"Invalid CSRF token\"}");
     return;
   }
   if (Update.end(true)) {
-    server_.send(200, "application/json", "{\"message\":\"Firmware verificato, riavvio in corso\"}");
+    server_.send(200, "application/json", "{\"message\":\"Firmware verified, restarting\"}");
     delay(500);
     restart();
   } else {
-    server_.send(400, "application/json", "{\"message\":\"Firmware non valido\"}");
+    server_.send(400, "application/json", "{\"message\":\"Invalid firmware\"}");
   }
 }
 

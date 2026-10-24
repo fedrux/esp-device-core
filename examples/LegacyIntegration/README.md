@@ -1,23 +1,23 @@
-# Integrazione con firmware legacy
+# Integrating an Existing Application
 
-Il core deve essere integrato nello stesso server web dello sketch. Ogni scheda
-ha il proprio server sulla porta 80; il core e le route non vengono condivisi
-tra schede tramite rete. Lo sketch può già possedere:
+Integrate the core into the same web server as an existing application. Each
+device has its own server on port 80; the core and routes are not shared
+between devices over the network. An application may already have:
 
-- un server applicativo sulla porta 80;
-- un bot Telegram con comandi specifici;
-- una logica di sensori o attuatori già collaudata.
+- application web pages on port 80;
+- a messaging integration with application-specific commands;
+- sensor or actuator logic.
 
-Non creare un secondo `WiFiServer` o `WebServer` **dentro lo stesso firmware**.
-Convertire il server legacy
-in `ESP8266WebServer`, usare la porta 80 e registrare tutte le route sul server
-restituito da `deviceCore.server()`. Le route `/admin/*` sono riservate al core:
+Do not create a second `WiFiServer` or `WebServer` inside the same firmware.
+Use one `ESP8266WebServer` or `WebServer` and register application routes on
+the server returned by `deviceCore.server()`. The `/admin/*` routes are reserved
+for the core:
 
 ```cpp
 #include <ESPDeviceCore.h>
 
 DeviceCoreConfig coreConfig{
-  "spruzzini",
+  "my-device",
   WIFI_PRIMARY_SSID, WIFI_PRIMARY_PASSWORD,
   WIFI_SECONDARY_SSID, WIFI_SECONDARY_PASSWORD,
   ADMIN_USER, ADMIN_PASSWORD, SETUP_AP_PASSWORD,
@@ -27,43 +27,35 @@ DeviceCoreConfig coreConfig{
 ESPDeviceCore deviceCore(coreConfig);
 
 String applicationStatus() {
-  return String("uscite=") + numeroUsciteAttive();
+  return String("active_outputs=") + activeOutputCount();
 }
 
 void setup() {
-  // Inizializza qui la logica legacy e il bot Telegram.
-  // Registra le route applicative su deviceCore.server() prima di begin().
+  // Initialize application logic and messaging integrations here.
+  // Register application routes on deviceCore.server() before begin().
   deviceCore.setStatusProvider(applicationStatus);
   deviceCore.begin();
 }
 
 void loop() {
-  // Mantieni i loop legacy; il core gestisce lo stesso server.
+  // Keep the application loop; the core services the same server.
   deviceCore.loop();
-  gestisciBotTelegram();
-  aggiornaAttuatori();
+  processApplicationMessages();
+  updateApplicationOutputs();
 }
 ```
 
-Dopo il caricamento:
+After upload:
 
-- applicazione esistente e amministrazione: `http://IP-DISPOSITIVO/`;
-- amministrazione, configurazione Wi-Fi e OTA:
-  `http://IP-DISPOSITIVO/admin`;
-- modalità recupero: collegarsi a `ESP-Setup-XXXX` e aprire
+- application pages and administration: `http://DEVICE-IP/`;
+- administration, Wi-Fi configuration, and OTA:
+  `http://DEVICE-IP/admin`;
+- recovery mode: connect to `ESP-Setup-XXXX` and open
   `http://192.168.4.1/`.
 
-I token Telegram devono stare in un file locale `secrets.h`, escluso da Git.
-Non copiare token presenti negli sketch storici nella repository pubblica.
+Keep messaging tokens in a local `secrets.h` excluded from Git. Do not commit
+application credentials to a public repository.
 
-## Mappatura dispositivi
-
-| Progetto | IP previsto | Porta applicazione | Porta core |
-|---|---:|---:|---:|
-| Spruzzini | 192.168.1.110 | 80 |
-| Energia | 192.168.1.111 | 80 |
-| Pylontech | 192.168.1.109 | 80 |
-| Spruzzini orto | 192.168.1.112 | 80 |
-
-La migrazione va fatta una scheda alla volta: prima si convertono le route del
-server legacy, poi si compila e si verifica il firmware sulla scheda corretta.
+Migrate and test one board at a time. Compile the target firmware and verify
+the application routes, administration routes, OTA update, and device logic
+before deployment.
