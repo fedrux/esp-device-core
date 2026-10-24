@@ -1,38 +1,38 @@
-# Revisione richiesta a GPT-6.1
+# Review Request for GPT-6.1
 
-## Obiettivo
+## Objective
 
-Realizzare un solo core riutilizzabile per firmware ESP8266/ESP32 che fornisca:
+Build one reusable core for ESP8266/ESP32 firmware providing:
 
-- connessione Wi-Fi primaria e secondaria;
-- configurazione persistente;
-- eventuale DHCP o IP statico;
-- pagina web;
-- configurazione amministrativa;
-- aggiornamento firmware OTA;
-- riavvio e diagnostica;
-- integrazione Telegram senza pubblicare token;
-- mantenimento delle funzioni applicative già esistenti.
+- primary and secondary Wi-Fi connection;
+- persistent configuration;
+- DHCP or static IP support;
+- web interface;
+- administration;
+- authenticated OTA firmware updates;
+- restart and diagnostics;
+- Telegram integration without publishing tokens;
+- preservation of all existing application features.
 
-Per **ogni firmware/dispositivo** deve esistere **un solo server web e una
-sola porta 80**. I quattro firmware non condividono un server fisico: ciascuna
-scheda mantiene il proprio server sul proprio IP. Il core comune deve quindi
-essere integrato nello stesso server delle funzioni applicative di quel
-firmware e non deve avviare un secondo server su `8080` o su un'altra porta.
+Each firmware/device must have **one web server and one port 80**. The four
+firmwares do not share one physical server: each board keeps its own server on
+its own IP. The common core must be integrated into that firmware's existing
+application server and must not start a second server on port 8080 or any other
+port.
 
-## Repository e stato Git
+## Repository and Git status
 
-- Repository pubblica: https://github.com/fedrux/esp-device-core
-- Branch di lavoro: `platform-v1`
+- Public repository: https://github.com/fedrux/esp-device-core
+- Current merged branch: `main`
 - Pull request: https://github.com/fedrux/esp-device-core/pull/1
-- Commit iniziale: `4e089c1`
-- CI iniziale: `70da55b`
-- Implementazione piattaforma: `8a460f9`
-- Correzione architetturale single-server: `7876ab7`
+- Initial commit: `4e089c1`
+- Initial CI fix: `70da55b`
+- Platform implementation: `8a460f9`
+- Single-server correction: `7876ab7`
+- Documentation clarification: `a4e8743`
+- Merge commit on `main`: `8362739`
 
-Il branch `platform-v1` non è stato fuso automaticamente in `main`.
-
-## File modificati o aggiunti
+## Files changed or added
 
 - `src/ESPDeviceCore.h`
 - `src/ESPDeviceCore.cpp`
@@ -40,30 +40,31 @@ Il branch `platform-v1` non è stato fuso automaticamente in `main`.
 - `examples/LegacyIntegration/README.md`
 - `README.md`
 - `.github/workflows/compile-example.yml`
+- `REVIEW-GPT6.1.md`
 
-## Cosa è stato implementato nel core
+## What the core implements
 
 ### Wi-Fi
 
-- tentativo sulla rete primaria;
-- fallback sulla rete secondaria;
-- modalità access point `ESP-Setup-XXXX` se entrambe falliscono;
-- salvataggio persistente in EEPROM;
-- supporto DHCP;
-- supporto IP statico, gateway, subnet e DNS;
-- form web per aggiornare le configurazioni.
+- tries the primary network;
+- falls back to the secondary network;
+- starts `ESP-Setup-XXXX` access point mode if both networks fail;
+- stores configuration persistently in EEPROM;
+- supports DHCP;
+- supports static IP, gateway, subnet, and DNS;
+- provides a web form for updating the configuration.
 
-### Web e sicurezza
+### Web and security
 
-- `ESP8266WebServer` per ESP8266;
-- `WebServer` per ESP32;
-- autenticazione Basic sulle route amministrative;
-- token CSRF generato all'avvio per POST di configurazione, riavvio e OTA;
-- aggiornamento firmware `.bin` autenticato;
-- endpoint JSON di stato;
-- amministrazione prevista sullo stesso server e sulla porta 80.
+- `ESP8266WebServer` on ESP8266;
+- `WebServer` on ESP32;
+- Basic Authentication for administration routes;
+- a per-boot CSRF token for configuration, restart, and OTA POST requests;
+- authenticated `.bin` firmware upload;
+- JSON status endpoint;
+- administration on the same server and port 80.
 
-Route amministrative previste:
+Administration routes:
 
 - `/admin`
 - `/admin/api/status`
@@ -73,155 +74,145 @@ Route amministrative previste:
 
 ### Telegram
 
-Il core non contiene un bot Telegram e non contiene token. Espone invece
-metodi e stato riutilizzabili, lasciando ai singoli progetti i comandi
-specifici. I token devono restare in `secrets.h`, escluso da Git.
+The core does not contain a Telegram bot or Telegram tokens. It exposes
+reusable status and restart hooks, leaving project-specific commands in each
+application. Tokens must stay in a local `secrets.h`, excluded from Git.
 
-### CI e compilazione
+### CI and compilation
 
-La GitHub Actions compila l'esempio su:
+GitHub Actions compiles the example for:
 
 - `esp8266:esp8266:nodemcuv2`;
 - `esp32:esp32:esp32`.
 
-Le compilazioni locali riuscite:
+Successful local builds were completed for:
 
 - ESP8266 NodeMCU;
-- ESP32 generico.
+- generic ESP32.
 
-Un errore locale precedente era dovuto a compilazioni Arduino parallele che
-usavano la stessa directory temporanea, non a un errore del codice.
+A previous local error was caused by parallel Arduino builds sharing one
+temporary directory, not by a source-code failure.
 
-## Quattro firmware da mantenere
+## Four firmware families to preserve
 
-| Progetto | IP previsto | Scheda/linea |
+| Project | Planned IP | Main responsibilities |
 |---|---:|---|
-| Pylontech | `192.168.1.109` | monitor NodeMCU con parser Pylontech |
-| Spruzzini | `192.168.1.110` | controller con 8 uscite e bot Telegram |
-| Energia | `192.168.1.111` | varianti LED/OLED e chiamate server |
-| Spruzzini orto | `192.168.1.112` | variante controller con bot Telegram |
+| Pylontech | `192.168.1.109` | NodeMCU monitor and Pylontech parser |
+| Spruzzini | `192.168.1.110` | Eight-output controller and Telegram bot |
+| Energia | `192.168.1.111` | LED/OLED variants and server requests |
+| Spruzzini orto | `192.168.1.112` | Garden controller variant and Telegram bot |
 
-Gateway/DNS previsto: `192.168.1.254`.
+Planned gateway/DNS: `192.168.1.254`.
 
-## Funzioni applicative da non perdere
+## Application features that must not be lost
 
 ### Spruzzini
 
-- controllo delle uscite;
-- cicli temporizzati;
-- comandi Telegram esistenti;
-- pagina web esistente;
-- stato delle uscite;
-- pulsante fisico;
+- output control;
+- timed irrigation cycles;
+- existing Telegram commands;
+- existing web page;
+- output status;
+- physical button;
 - NTP;
-- messaggi e log applicativi.
+- application messages and logs.
 
-Il firmware attuale usa un `WiFiServer` manuale sulla porta 80 e funzioni come
-`checkForClient`, `triggerPin`, `cicloSpruzzini` e `writer`.
+The current firmware uses a manual `WiFiServer` on port 80 and functions such
+as `checkForClient`, `triggerPin`, `cicloSpruzzini`, and `writer`.
 
 ### Spruzzini orto
 
-- comandi Telegram per l'orto;
-- controllo pin dedicato;
-- pagina web esistente;
-- NTP e log applicativi.
+- garden-specific Telegram commands;
+- dedicated pin control;
+- existing web page;
+- NTP and application logs.
 
-Anche questo firmware usa un server manuale e non deve essere sovrascritto
-alla cieca.
+This firmware also uses a manual server and must not be replaced blindly.
 
 ### Energia
 
-- variante LED;
-- variante OLED ESP32-C3;
-- richieste al server principale e alla riserva;
-- visualizzazione stato batteria, rete, inverter e Tuya;
-- IP statico e logica di fallback.
+- LED variant;
+- ESP32-C3 OLED variant;
+- requests to the primary and fallback servers;
+- battery, grid, inverter, and Tuya status display;
+- static IP and fallback logic.
 
 ### Pylontech
 
-- parser seriale Pylontech;
-- pagina web e API già presenti;
-- autenticazione e OTA già presenti nel progetto;
-- monitoraggio batterie e conferma finale del protocollo.
+- Pylontech serial parser;
+- existing web page and APIs;
+- existing authentication and OTA;
+- battery monitoring and protocol completion confirmation.
 
-Il problema Pylontech diagnosticato in precedenza era nel ritorno RS232:
-veniva ricevuto solo l'eco `pwr`, senza frame dati e senza
+The previously diagnosed Pylontech issue was in the RS232 return path: only the
+`pwr` echo was received, without the data frame and without
 `Command completed successfully`.
 
-## Punto architetturale critico
+## Critical architecture point
 
-La prima proposta usava il core su porta `8080` e lasciava il server
-applicativo sulla porta 80. Questo è stato riconosciuto come sbagliato perché
-l'utente vuole **un solo core/server che faccia tutto**.
+The first proposal used the core on port `8080` while leaving the application
+server on port 80. That was incorrect because the required architecture is
+**one core/server inside each firmware**.
 
-La correzione `7876ab7` ha riportato il core alla porta 80 e ha aggiornato la
-documentazione. Tuttavia, la conversione concreta del firmware Spruzzini non
-è ancora completa:
+The correction `7876ab7` returned the core to port 80 and updated the
+architecture documentation. The actual migration of the Spruzzini legacy
+firmware is still not complete:
 
-- il vecchio sketch usa ancora `WiFiServer` con parsing HTTP manuale;
-- il core usa `ESP8266WebServer`;
-- non è sufficiente istanziare entrambi;
-- bisogna migrare il server Spruzzini a un unico `ESP8266WebServer`;
-- bisogna registrare sullo stesso oggetto le route applicative e le route
-  `/admin/*` del core;
-- bisogna conservare i comportamenti Telegram, pin, cicli e pagina esistente;
-- bisogna compilare e provare il firmware migrato prima dell'upload.
+- the old sketch still uses manual `WiFiServer` HTTP parsing;
+- the core uses `ESP8266WebServer`;
+- both cannot simply be instantiated together;
+- the Spruzzini server must be migrated to one `ESP8266WebServer`;
+- application routes and `/admin/*` routes must be registered on that same
+  server object;
+- Telegram, pins, cycles, and the existing page must remain functional;
+- the migrated firmware must be compiled and tested before upload.
 
-La stessa strategia va poi applicata alle altre tre famiglie, con adattatori
-specifici quando il server esistente è già diverso.
+The same strategy must then be applied to the other three firmware families,
+with project-specific adapters where their existing server implementations
+differ.
 
-## Revisione tecnica richiesta
+## Requested technical review
 
-GPT-6.1 dovrebbe controllare in particolare:
+GPT-6.1 should specifically check:
 
-1. Se `ESPDeviceCore` può davvero condividere un solo `WebServer` con le route
-   applicative senza collisioni.
-2. Se l'ordine di registrazione delle route è corretto.
-3. Se l'endpoint `/` del core può sovrascrivere la pagina applicativa.
-4. Se la modalità AP di configurazione resta raggiungibile tramite `/admin`.
-5. Se la persistenza EEPROM è compatibile con ESP8266 ed ESP32.
-6. Se la gestione delle stringhe e dei puntatori evita leak e frammentazione
-   heap su ESP8266.
-7. Se la validazione IP è completa.
-8. Se la protezione CSRF è adeguata per un dispositivo locale.
-9. Se l'upload OTA gestisce correttamente errori parziali e file non `.bin`.
-10. Se l'autenticazione Basic e le password di esempio sono sicure.
-11. Se il core non rompe i bot Telegram esistenti.
-12. Se la migrazione di `WiFiServer` manuale a `ESP8266WebServer` conserva tutte
-    le funzioni degli Spruzzini.
-13. Se servono API esplicite per registrare route applicative prima o dopo
-    `begin()`.
-14. Se è necessario rimuovere o rendere condizionale la route `/` del core.
-15. Se il progetto deve usare `Preferences`/LittleFS su ESP32 invece di EEPROM.
-16. Se la CI deve includere ESP32-C3 oltre al generico ESP32.
-17. Se il vero repeater NAT deve restare fuori dal core.
+1. Whether `ESPDeviceCore` can share one `WebServer` with application routes
+   without route collisions.
+2. Whether route registration order is correct.
+3. Whether the core `/` route can overwrite an application home page.
+4. Whether AP setup mode remains reachable through `/admin`.
+5. Whether EEPROM persistence is compatible with ESP8266 and ESP32.
+6. Whether string handling and pointers avoid leaks and heap fragmentation on
+   ESP8266.
+7. Whether IP validation is complete.
+8. Whether local CSRF protection is adequate for a device administration page.
+9. Whether OTA handles partial failures and invalid file types correctly.
+10. Whether Basic Authentication and example passwords are safe.
+11. Whether the core preserves the existing Telegram bots.
+12. Whether migrating manual `WiFiServer` parsing preserves all Spruzzini
+    features.
+13. Whether explicit APIs are needed to register application routes before or
+    after `begin()`.
+14. Whether the core `/` route should be optional or conditionally registered.
+15. Whether ESP32 should use `Preferences` or LittleFS instead of EEPROM.
+16. Whether CI should include ESP32-C3 in addition to generic ESP32.
+17. Whether a real NAT repeater should remain outside the core.
 
-## Vincoli
+## Constraints
 
-- non pubblicare password Wi-Fi;
-- non pubblicare password admin;
-- non pubblicare token Telegram;
-- non modificare `.env` del progetto MondoDentista;
-- non cancellare o sovrascrivere gli originali;
-- non caricare firmware su una scheda senza identificare porta e modello;
-- non dichiarare completata la migrazione dei quattro firmware finché non sono
-  compilati e verificati singolarmente;
-- mantenere una sola porta/server web per dispositivo;
-- mantenere le funzioni applicative già create.
+- never publish Wi-Fi passwords;
+- never publish admin passwords;
+- never publish Telegram tokens;
+- never modify production credentials;
+- never delete or overwrite original firmware archives;
+- never upload firmware without identifying the correct board and port;
+- never claim the four firmware migrations are complete until each one is
+  compiled and tested individually;
+- keep one server and one port 80 per firmware;
+- preserve all existing application features.
 
-## Esito attuale onesto
+## Honest current status
 
-Il core pubblico è stato ampliato e compilato, ma la piattaforma completa
-multi-firmware non è ancora pronta per il caricamento sui dispositivi fisici.
-L'architettura target è:
-
-```text
-ESP Spruzzini (.110)       -> un server web sulla porta 80
-ESP Energia (.111)          -> un server web sulla porta 80
-ESP Pylontech (.109)        -> un server web sulla porta 80
-ESP Spruzzini orto (.112)   -> un server web sulla porta 80
-                              tutti usano lo stesso core comune
-```
-
-La parte ancora necessaria è la migrazione effettiva dei quattro sketch legacy
-al rispettivo server unico e la verifica funzionale di ogni dispositivo.
+The public core has been expanded, compiled, documented, and merged into
+`main`. The complete multi-firmware platform is not yet ready for physical
+deployment. The remaining work is the actual migration of the four legacy
+sketches to one server per firmware and functional verification of each board.
