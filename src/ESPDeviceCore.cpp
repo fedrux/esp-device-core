@@ -3,7 +3,7 @@
 String (*ESPDeviceCore::statusProvider_)() = nullptr;
 
 ESPDeviceCore::ESPDeviceCore(const DeviceCoreConfig& config)
-    : config_(config), server_(config.adminPort) {}
+    : config_(config) {}
 
 static bool parseIpAddress(const String& value, uint8_t output[4]) {
   int start = 0;
@@ -96,7 +96,7 @@ void ESPDeviceCore::startSetupAp() {
   suffix.replace(":", "");
   suffix = suffix.substring(max(0, static_cast<int>(suffix.length()) - 4));
   WiFi.softAP(String("ESP-Setup-") + suffix, config_.apPassword);
-  status_ = "Modalita configurazione: http://192.168.4.1:8080/";
+  status_ = "Modalita configurazione: http://192.168.4.1/";
 }
 
 bool ESPDeviceCore::authorized() {

@@ -25,8 +25,9 @@ Un core semplice e riutilizzabile per progetti Arduino su ESP8266 ed ESP32.
 Se nessuna rete è disponibile, il dispositivo crea un access point `ESP-Setup-XXXX`.
 Collegati a quella rete e apri `http://192.168.4.1:8080/`. Il portale permette di
 salvare entrambe le reti, scegliere DHCP o IP statico e riavviare il dispositivo.
-Quando il dispositivo è già collegato alla LAN, il portale è disponibile all'IP
-del dispositivo sulla porta `8080` (ad esempio `http://192.168.1.110:8080/admin`).
+Quando il dispositivo è già collegato alla LAN, il portale è disponibile
+sullo stesso server e sulla stessa porta 80, all'indirizzo
+`http://192.168.1.110/admin`.
 
 ## Sicurezza
 
@@ -55,8 +56,8 @@ implementato e testato come progetto separato.
 ## Integrazione firmware esistenti
 
 Per aggiungere il core a un firmware che ha già una pagina web o un bot
-Telegram, usare la porta amministrativa `8080` e mantenere la logica applicativa
-esistente sulla propria porta. La procedura è documentata in
+Telegram, usare un solo `ESP8266WebServer` sulla porta 80 e registrare le
+route applicative e quelle amministrative sullo stesso oggetto. La procedura è documentata in
 [examples/LegacyIntegration/README.md](examples/LegacyIntegration/README.md).
 
 ## Licenza

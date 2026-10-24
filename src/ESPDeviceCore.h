@@ -29,7 +29,6 @@ struct DeviceCoreConfig {
   const char* adminPassword;
   const char* apPassword;
   uint32_t wifiTimeoutMs = 15000;
-  uint16_t adminPort = 8080;
   bool useDhcp = true;
   uint8_t staticIp[4] = {0, 0, 0, 0};
   uint8_t gateway[4] = {0, 0, 0, 0};
@@ -64,7 +63,7 @@ class ESPDeviceCore {
     uint8_t dns[4];
   };
   DeviceCoreConfig config_;
-  DeviceWebServer server_;
+  DeviceWebServer server_{80};
   String status_;
   String csrfToken_;
   StoredConfig storedConfig_{};
