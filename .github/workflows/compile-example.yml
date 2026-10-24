@@ -1,0 +1,16 @@
+name: Compile example
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arduino/setup-arduino-cli@v2
+      - run: arduino-cli core update-index
+      - run: arduino-cli core install esp8266:esp8266
+      - run: cp examples/BasicDevice/secrets.example.h examples/BasicDevice/secrets.h
+      - run: arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 --library . examples/BasicDevice
