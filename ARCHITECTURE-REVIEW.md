@@ -1,4 +1,4 @@
-# Generic Platform Review
+# Architecture Review
 
 ## Purpose
 
@@ -71,3 +71,4 @@ application bot, personal network, or project-specific hardware behavior.
 Application authors should copy the generic example, provide local secrets in
 an ignored file, and implement their own routes and device logic through the
 core's public API.
+
