@@ -55,9 +55,11 @@ implementato e testato come progetto separato.
 
 ## Integrazione firmware esistenti
 
-Per aggiungere il core a un firmware che ha già una pagina web o un bot
-Telegram, usare un solo `ESP8266WebServer` sulla porta 80 e registrare le
-route applicative e quelle amministrative sullo stesso oggetto. La procedura è documentata in
+Ogni firmware ha il proprio server web sulla porta 80. Per aggiungere il core a
+un firmware che ha già una pagina web o un bot Telegram, usare un solo
+`ESP8266WebServer`/`WebServer` per quella scheda e registrare le route
+applicative e quelle amministrative sullo stesso oggetto. Il core è comune ai
+quattro firmware, ma i server restano separati per dispositivo. La procedura è documentata in
 [examples/LegacyIntegration/README.md](examples/LegacyIntegration/README.md).
 
 ## Licenza

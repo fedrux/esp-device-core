@@ -1,12 +1,15 @@
 # Integrazione con firmware legacy
 
-Il core deve essere integrato nello stesso server web dello sketch, che può già possedere:
+Il core deve essere integrato nello stesso server web dello sketch. Ogni scheda
+ha il proprio server sulla porta 80; il core e le route non vengono condivisi
+tra schede tramite rete. Lo sketch può già possedere:
 
 - un server applicativo sulla porta 80;
 - un bot Telegram con comandi specifici;
 - una logica di sensori o attuatori già collaudata.
 
-Non creare un secondo `WiFiServer` o `WebServer`. Convertire il server legacy
+Non creare un secondo `WiFiServer` o `WebServer` **dentro lo stesso firmware**.
+Convertire il server legacy
 in `ESP8266WebServer`, usare la porta 80 e registrare tutte le route sul server
 restituito da `deviceCore.server()`. Le route `/admin/*` sono riservate al core:
 

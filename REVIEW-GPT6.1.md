@@ -14,9 +14,11 @@ Realizzare un solo core riutilizzabile per firmware ESP8266/ESP32 che fornisca:
 - integrazione Telegram senza pubblicare token;
 - mantenimento delle funzioni applicative già esistenti.
 
-Per ogni dispositivo deve esistere **un solo server web e una sola porta 80**.
-Il core deve quindi essere integrato nello stesso server delle funzioni
-applicative, non deve avviare un secondo server su `8080` o su un'altra porta.
+Per **ogni firmware/dispositivo** deve esistere **un solo server web e una
+sola porta 80**. I quattro firmware non condividono un server fisico: ciascuna
+scheda mantiene il proprio server sul proprio IP. Il core comune deve quindi
+essere integrato nello stesso server delle funzioni applicative di quel
+firmware e non deve avviare un secondo server su `8080` o su un'altra porta.
 
 ## Repository e stato Git
 
@@ -211,5 +213,15 @@ GPT-6.1 dovrebbe controllare in particolare:
 
 Il core pubblico è stato ampliato e compilato, ma la piattaforma completa
 multi-firmware non è ancora pronta per il caricamento sui dispositivi fisici.
+L'architettura target è:
+
+```text
+ESP Spruzzini (.110)       -> un server web sulla porta 80
+ESP Energia (.111)          -> un server web sulla porta 80
+ESP Pylontech (.109)        -> un server web sulla porta 80
+ESP Spruzzini orto (.112)   -> un server web sulla porta 80
+                              tutti usano lo stesso core comune
+```
+
 La parte ancora necessaria è la migrazione effettiva dei quattro sketch legacy
-al server unico e la verifica funzionale di ogni dispositivo.
+al rispettivo server unico e la verifica funzionale di ogni dispositivo.
