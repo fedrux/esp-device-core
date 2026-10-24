@@ -7,11 +7,21 @@ on:
 jobs:
   compile:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - fqbn: esp8266:esp8266:nodemcuv2
+            core: esp8266:esp8266
+            url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
+          - fqbn: esp32:esp32:esp32
+            core: esp32:esp32
+            url: ""
     steps:
       - uses: actions/checkout@v4
       - uses: arduino/setup-arduino-cli@v2
-      - run: arduino-cli config add board_manager.additional_urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
+      - if: matrix.url != ''
+        run: arduino-cli config add board_manager.additional_urls ${{ matrix.url }}
       - run: arduino-cli core update-index
-      - run: arduino-cli core install esp8266:esp8266
+      - run: arduino-cli core install ${{ matrix.core }}
       - run: cp examples/BasicDevice/secrets.example.h examples/BasicDevice/secrets.h
-      - run: arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 --library . examples/BasicDevice
+      - run: arduino-cli compile --fqbn ${{ matrix.fqbn }} --library . examples/BasicDevice
