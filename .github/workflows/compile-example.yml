@@ -10,6 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: arduino/setup-arduino-cli@v2
+      - run: arduino-cli config add board_manager.additional_urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
       - run: arduino-cli core update-index
       - run: arduino-cli core install esp8266:esp8266
       - run: cp examples/BasicDevice/secrets.example.h examples/BasicDevice/secrets.h
