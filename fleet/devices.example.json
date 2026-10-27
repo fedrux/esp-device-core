@@ -1,0 +1,13 @@
+{
+  "devices": [
+    {
+      "id": "example",
+      "name": "Example device",
+      "role": "Replace with your device function",
+      "url": null,
+      "adapter": "core",
+      "user_env": "EXAMPLE_ADMIN_USER",
+      "password_env": "EXAMPLE_ADMIN_PASSWORD"
+    }
+  ]
+}

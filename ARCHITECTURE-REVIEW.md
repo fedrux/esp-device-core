@@ -53,7 +53,36 @@ The core owns only reusable device infrastructure and `/admin/*` routes.
 13. Keep NAT repeater functionality outside this generic core unless it becomes
     a separately designed feature.
 
-## Validation currently included
+## Version 1.1 behavior and validation
+
+Network lifecycle is driven from `loop()` without connection waits. Trials stay
+in RAM until confirmation through the new LAN address; timeout and cancellation
+restore the previous configuration. A new boot always loads committed settings.
+The core owns only `/admin` and `/admin/*`; `/` and Serial remain application-owned.
+
+OTA uses an identity-bearing package with header validation before flash writes
+and payload size/MD5 validation before activation. It requires an authenticated
+CSRF header at upload start. Packages are not signed. Storage reserves bytes
+0-1023 and reads bounded, validated legacy records before migrating on save.
+
+The optional PC fleet viewer is generic and read-only. Personal inventory,
+environment credentials and state files live outside the public repository.
+Device reachability is separate from fresh application data. The viewer binds
+to loopback and does not change device configuration.
+
+Automated validation includes:
+
+- portable protocol checks and core lifecycle scenarios with fake hardware,
+  compiled with warnings as errors and UndefinedBehaviorSanitizer;
+- Python tests for packaging, device identity, stale data, last contact and
+  credential filtering;
+- CI behavior checks and a third compile target for ESP32-C3.
+
+Physical radio, flash, AP access, recovery after power loss and OTA boot must
+still be exercised on each actual target. Compilation and fake-hardware tests
+do not constitute a completed hardware rollout.
+
+## Original validation baseline
 
 - local ESP8266 compilation;
 - local ESP32 compilation;

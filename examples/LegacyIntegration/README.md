@@ -16,15 +16,21 @@ for the core:
 ```cpp
 #include <ESPDeviceCore.h>
 
-DeviceCoreConfig coreConfig{
+ESP_DEVICE_FIRMWARE(firmwareIdentity, "my-application", "1.1.0");
+
+DeviceCoreConfig makeCoreConfig() {
+  DeviceCoreConfig coreConfig{
   "my-device",
   WIFI_PRIMARY_SSID, WIFI_PRIMARY_PASSWORD,
   WIFI_SECONDARY_SSID, WIFI_SECONDARY_PASSWORD,
   ADMIN_USER, ADMIN_PASSWORD, SETUP_AP_PASSWORD,
   15000
-};
+  };
+  coreConfig.firmware = &firmwareIdentity;
+  return coreConfig;
+}
 
-ESPDeviceCore deviceCore(coreConfig);
+ESPDeviceCore deviceCore(makeCoreConfig());
 
 String applicationStatus() {
   return String("active_outputs=") + activeOutputCount();
@@ -34,7 +40,7 @@ void setup() {
   // Initialize application logic and messaging integrations here.
   // Register application routes on deviceCore.server() before begin().
   deviceCore.setStatusProvider(applicationStatus);
-  deviceCore.begin();
+  deviceCore.begin(); // Returns before Wi-Fi is connected.
 }
 
 void loop() {
@@ -51,7 +57,23 @@ After upload:
 - administration, Wi-Fi configuration, and OTA:
   `http://DEVICE-IP/admin`;
 - recovery mode: connect to `ESP-Setup-XXXX` and open
-  `http://192.168.4.1/`.
+  `http://192.168.4.1/admin`.
+
+The core never registers `/` or a not-found handler. Keep the application's
+homepage and include a link to `/admin`. Registering core routes does not replace
+those application handlers. Only the core should call `handleClient()` on this
+shared server during normal operation.
+
+`begin()` and Wi-Fi recovery are nonblocking. Application network requests must
+wait for `WiFi.status() == WL_CONNECTED`; sensors and local outputs can keep
+running while connection attempts continue. The core does not initialize Serial,
+so an existing UART protocol is preserved. It reserves EEPROM bytes 0-1023;
+resolve any application EEPROM conflict before migration.
+
+Use `.edc` packages for OTA and keep the application ID fixed between versions.
+Change the firmware version for every release. OTA is a maintenance operation:
+the synchronous upload handler can delay the application's loop. Ensure outputs
+and peripherals tolerate maintenance before allowing an update.
 
 Keep messaging tokens in a local `secrets.h` excluded from Git. Do not commit
 application credentials to a public repository.
